@@ -1,0 +1,8 @@
+discord[voice]
+pycryptodome
+monitorcontrol
+pynput
+pygame
+pyperclip
+discord.py
+pyaudio
